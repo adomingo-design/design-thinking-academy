@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Thinking Academy</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React 18 + ReactDOM 18 -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel (para JSX en el navegador) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .transition-all{
+      transition-property: all;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      transition-duration: 150ms;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const ACADEMY_DATA = [
+      {
+        id: 'empatia',
+        title: 'Fase 1: Empatitzar',
+        description: 'Entendre profundament les necessitats, dolors i motivacions dels usuaris.',
+        videoUrl: 'https://www.youtube.com/watch?v=J8QopxPGijU',
+        tools: [
+          { id: 'mapa-empatia', name: 'Mapa d\\'Empatia', desc: 'Visualitza el que l\\'usuari diu, fa, pensa i sent.', content: 'Eina de síntesi per ajustar la proposta de valor.' },
+          { id: 'buyer-persona', name: 'Buyer Persona', desc: 'Crea un perfil semi-fictici del teu client ideal.', content: 'Ajuda a personificar el grup d\\'usuaris.' }
+        ]
+      },
+      {
+        id: 'definicio',
+        title: 'Fase 2: Definir',
+        description: 'Sintetitzar la informació per trobar el problema real.',
+        videoUrl: 'https://www.youtube.com/watch?v=Fs_n3g5mrvA',
+        tools: [
+          { id: 'pov', name: 'Point of View (POV)', desc: 'Frase que defineix l\\'usuari i la necessitat.', content: 'Estructura: [Usuari] necessita [Necesidad] perquè [Insight].' },
+          { id: 'hmw', name: 'How Might We (HMW)', desc: 'Converteix problemes en oportunitats.', content: 'Preguntes tipus "¿Com podríem...?"' }
+        ]
+      },
+      {
+        id: 'ideacio',
+        title: 'Fase 3: Idear',
+        description: 'Generar la major quantitat de solucions possibles.',
+        videoUrl: 'https://www.youtube.com/watch?v=OUrLyuxisSk',
+        tools: [
+          { id: 'brainstorming', name: 'Brainstorming', desc: 'Tècnica grupal per idees massives.', content: 'Fomentar la quantitat i suspendre el judici.' },
+          { id: 'crazy-8', name: 'Crazy 8\\'s', desc: 'Dibuixa 8 idees en 8 minuts.', content: 'Mètode ràpid per forçar la ment.' }
+        ]
+      },
+      {
+        id: 'prototipado',
+        title: 'Fase 4: Prototipar',
+        description: 'Fer tangibles les idees per poder mostrar-les.',
+        videoUrl: 'https://www.youtube.com/watch?v=nf8cSBIO6QI',
+        tools: [
+          { id: 'storyboard', name: 'Storyboard', desc: 'Narració visual de la solució.', content: 'Experiència de l\\'usuari en vinyetes.' },
+          { id: 'prototipo-baja', name: 'Prototip de Baixa Fidelitat', desc: 'Models ràpids en paper o cartró.', content: 'L\\'objectiu és fallar ràpid i barat.' }
+        ]
+      },
+      {
+        id: 'testeo',
+        title: 'Fase 5: Testejar',
+        description: 'Validar les solucions amb usuaris reals.',
+        videoUrl: 'https://www.youtube.com/watch?v=eRNeTYoLvN0',
+        tools: [
+          { id: 'malla-receptora', name: 'Malla Receptora', desc: 'Quadrant per organitzar feedback.', content: 'Coses interessants, crítiques, preguntes i idees.' },
+          { id: 'test-usuario', name: 'Proves d\\'Usuari', desc: 'Observar l\\'usuari amb el prototip.', content: 'Identifica friccions i millores.' }
+        ]
+      }
+    ];
+
+    function App() {
+      const [completedTools, setCompletedTools] = useState([]);
+      const [activeTab, setActiveTab] = useState(ACADEMY_DATA[0].id);
+      const [copiedId, setCopiedId] = useState(null);
+
+      const totalTools = ACADEMY_DATA.reduce((acc, curr) => acc + curr.tools.length, 0);
+      const progressPercent = Math.round((completedTools.length / totalTools) * 100);
+
+      const toggleTool = (toolId) => {
+        setCompletedTools(prev => prev.includes(toolId) ? prev.filter(id => id !== toolId) : [...prev, toolId]);
+      };
+
+      const copyToClipboard = (text, id) => {
+        navigator.clipboard?.writeText(text).catch(() => {
+          // fallback
+          const textArea = document.createElement("textarea");
+          textArea.value = text;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+        });
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000);
+      };
+
+      const activePhase = ACADEMY_DATA.find(p => p.id === activeTab);
+
+      return (
+        <div className="min-h-screen p-4 md:p-8 text-slate-900">
+          <div className="max-w-5xl mx-auto">
+            <header className="flex flex-col md:flex-row justify-between gap-4 mb-8">
+              <h1 className="text-3xl font-black text-indigo-700">Design Thinking Academy</h1>
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+                <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Progrés: {progressPercent}%</div>
+                <div className="w-32 bg-slate-100 h-3 rounded-full overflow-hidden">
+                  <div className="h-full bg-indigo-600 transition-all" style={{width: `${progressPercent}%`}}></div>
+                </div>
+              </div>
+            </header>
+
+            <nav className="flex gap-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
+              {ACADEMY_DATA.map(phase => (
+                <button
+                  key={phase.id}
+                  onClick={() => setActiveTab(phase.id)}
+                  className={`px-4 py-2 rounded-lg font-bold whitespace-nowrap border-2 transition-all ${
+                    activeTab === phase.id
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-md'
+                      : 'bg-white border-transparent text-slate-500 hover:bg-slate-100'
+                  }`}
+                >
+                  {phase.title.split(': ')[1]}
+                </button>
+              ))}
+            </nav>
+
+            <main className="bg-white rounded-2xl p-6 md:p-8 shadow-lg border border-slate-100">
+              <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
+                <div>
+                  <h2 className="text-3xl font-black text-slate-800 mb-2">{activePhase.title}</h2>
+                  <p className="text-slate-500 text-lg leading-relaxed max-w-2xl">{activePhase.description}</p>
+                </div>
+                <button
+                  onClick={() => copyToClipboard(activePhase.videoUrl, activePhase.id)}
+                  className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all flex items-center gap-2 ${
+                    copiedId === activePhase.id
+                      ? 'bg-green-100 border-green-500 text-green-700'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-white hover:border-indigo-300'
+                  }`}
+                >
+                  <span>{copiedId === activePhase.id ? '✓ Copiat!' : 'Copiar URL Vídeo'}</span>
+                </button>
+              </div>
+
+              <div className="grid gap-6">
+                {activePhase.tools.map(tool => (
+                  <div
+                    key={tool.id}
+                    className={`p-6 rounded-2xl border-2 transition-all ${
+                      completedTools.includes(tool.id)
+                        ? 'bg-green-50 border-green-200 shadow-inner'
+                        : 'bg-white border-slate-100 hover:border-indigo-100 shadow-sm'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center gap-4">
+                      <div className="flex-1">
+                        <h3 className={`font-bold text-xl mb-1 ${completedTools.includes(tool.id) ? 'text-green-800' : 'text-slate-800'}`}>{tool.name}</h3>
+                        <p className="text-sm text-slate-500 mb-4 italic font-medium">{tool.desc}</p>
+                        <div className="bg-white/50 p-4 rounded-xl text-slate-700 border border-slate-100/50">
+                          {tool.content}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => toggleTool(tool.id)}
+                        className={`w-12 h-12 shrink-0 rounded-full flex items-center justify-center font-bold text-2xl transition-all active:scale-90 ${
+                          completedTools.includes(tool.id)
+                            ? 'bg-green-500 text-white shadow-md shadow-green-200'
+                            : 'bg-indigo-100 text-indigo-600 hover:bg-indigo-600 hover:text-white'
+                        }`}
+                      >
+                        {completedTools.includes(tool.id) ? '✓' : '+'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
