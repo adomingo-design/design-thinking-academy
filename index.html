@@ -175,53 +175,68 @@
       const downloadPDF = () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ unit: "mm", format: "a4" });
-
+      
         const pageW = doc.internal.pageSize.getWidth();
         const pageH = doc.internal.pageSize.getHeight();
         const margin = 14;
         let y = 18;
-
+      
         const today = new Date();
-        const dateStr = today.toLocaleDateString("ca-ES", { year: "numeric", month: "2-digit", day: "2-digit" });
-
+        const dateStr = today.toLocaleDateString("ca-ES", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        });
+      
         const completedCount = completedTools.length;
         const pendingCount = totalTools - completedCount;
-
+      
         const addHeader = () => {
           doc.setFillColor(79, 70, 229); // indigo
           doc.rect(0, 0, pageW, 22, "F");
-
+      
           doc.setTextColor(255, 255, 255);
           doc.setFont("helvetica", "bold");
           doc.setFontSize(16);
           doc.text("Design Thinking Academy", margin, 14);
-
+      
           doc.setFont("helvetica", "normal");
           doc.setFontSize(10);
-          doc.text(`Informe de progres — ${dateStr}`, pageW - margin, 14, { align: "right" });
-
+          doc.text(`Informe de progrés — ${dateStr}`, pageW - margin, 14, { align: "right" });
+      
           doc.setTextColor(15, 23, 42); // slate-900
           y = 32;
         };
-
+      
         const ensureSpace = (needed = 8) => {
           if (y + needed > pageH - margin) {
             doc.addPage();
             addHeader();
           }
         };
-
+      
         const sectionTitle = (txt) => {
           ensureSpace(10);
           doc.setFont("helvetica", "bold");
           doc.setFontSize(12);
+          doc.setTextColor(15, 23, 42);
           doc.text(txt, margin, y);
           y += 7;
           doc.setDrawColor(226, 232, 240); // slate-200
           doc.line(margin, y, pageW - margin, y);
           y += 6;
         };
-
+      
+        const subTitle = (txt, color = [15, 23, 42]) => {
+          ensureSpace(8);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          doc.setTextColor(color[0], color[1], color[2]);
+          doc.text(txt, margin, y);
+          y += 6;
+          doc.setTextColor(15, 23, 42);
+        };
+      
         const bullet = (txt) => {
           ensureSpace(7);
           doc.setFont("helvetica", "normal");
@@ -232,58 +247,81 @@
           doc.text(lines, margin + 4, y);
           y += lines.length * 5 + 1;
         };
-
+      
         addHeader();
-
+      
+        // RESUM
         sectionTitle("Resum");
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
-        doc.text(`Progres total: ${progressPercent}%`, margin, y); y += 6;
+        doc.setTextColor(15, 23, 42);
+        doc.text(`Progrés total: ${progressPercent}%`, margin, y); y += 6;
         doc.text(`Completades: ${completedCount} / ${totalTools}`, margin, y); y += 6;
         doc.text(`Pendents: ${pendingCount}`, margin, y); y += 8;
-
-        // Barra de progres
+      
+        // Barra de progrés
         ensureSpace(14);
         const barX = margin;
         const barY = y;
         const barW = pageW - margin * 2;
         const barH = 6;
-
+      
         doc.setFillColor(241, 245, 249); // slate-100
         doc.roundedRect(barX, barY, barW, barH, 2, 2, "F");
-
+      
         const fillW = Math.max(0, Math.min(barW, (progressPercent / 100) * barW));
         doc.setFillColor(79, 70, 229); // indigo
         doc.roundedRect(barX, barY, fillW, barH, 2, 2, "F");
         y += 14;
-
-        sectionTitle("Tasques pendents per fase");
-
-        let anyPending = false;
+      
+        // ✅ TASQUES FETES I PENDENTS (per fase)
+        sectionTitle("Tasques per fase");
+      
+        let anyListed = false;
+      
         ACADEMY_DATA.forEach((phase) => {
+          const doneTools = phase.tools.filter(t => completedTools.includes(t.id));
           const pendingTools = phase.tools.filter(t => !completedTools.includes(t.id));
-          if (pendingTools.length === 0) return;
-
-          anyPending = true;
-          ensureSpace(8);
+      
+          // Si no hi ha res a mostrar (no hauria de passar), saltem
+          if (doneTools.length === 0 && pendingTools.length === 0) return;
+      
+          anyListed = true;
+      
+          ensureSpace(10);
           doc.setFont("helvetica", "bold");
           doc.setFontSize(11);
+          doc.setTextColor(15, 23, 42);
           doc.text(phase.title, margin, y);
-          y += 6;
-
-          pendingTools.forEach((t) => bullet(t.name));
+          y += 7;
+      
+          // FETES
+          if (doneTools.length > 0) {
+            subTitle(`Fetes (${doneTools.length})`, [22, 163, 74]); // verd
+            doneTools.forEach(t => bullet(t.name));
+            y += 2;
+          }
+      
+          // PENDENTS
+          if (pendingTools.length > 0) {
+            subTitle(`Pendents (${pendingTools.length})`, [220, 38, 38]); // vermell
+            pendingTools.forEach(t => bullet(t.name));
+            y += 2;
+          }
+      
+          // Espai entre fases
           y += 2;
         });
-
-        if (!anyPending) {
+      
+        if (!anyListed) {
           ensureSpace(10);
           doc.setFont("helvetica", "normal");
           doc.setFontSize(10);
-          doc.text("No tens tasques pendents. Tot completat! 🎉", margin, y);
+          doc.text("No hi ha tasques per mostrar.", margin, y);
           y += 6;
         }
-
-        // Peu de pagina
+      
+        // Peu de pàgina
         ensureSpace(14);
         doc.setDrawColor(226, 232, 240);
         doc.line(margin, pageH - 18, pageW - margin, pageH - 18);
@@ -291,7 +329,7 @@
         doc.setFontSize(9);
         doc.setTextColor(100, 116, 139); // slate-500
         doc.text("Generat des de Design Thinking Academy", margin, pageH - 10);
-
+      
         doc.save(`informe-progres-${dateStr.replaceAll("/", "-")}.pdf`);
       };
 
